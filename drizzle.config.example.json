@@ -1,0 +1,12 @@
+{
+    "dialect": "mysql",
+    "out": "./src/db/migration",
+    "schema": "./src/db/schema/*.ts",
+    "dbCredentials": {
+        "host": "localhost",
+        "port": "3306",
+        "user": "user",
+        "password": "pass",
+        "database": "name"
+    }
+}
