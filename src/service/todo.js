@@ -8,8 +8,9 @@ const {
   validateGetListTodo
 } = require('./todo.internal')
 const { parseRFC3339Datetime } = require('../utils/datetime');
-const { eq, and, desc } = require('drizzle-orm');
+const { eq, and, or, desc, gte, lte } = require('drizzle-orm');
 const { UsecaseError } = require('../utils/error');
+const dayjs = require('dayjs');
 
 async function createTodo(userId, message, scheduledAt) {
   validateCreateTodo(message, scheduledAt)
@@ -67,10 +68,10 @@ async function deleteTodo(userId, todoId) {
   return {}
 }
 
-async function listTodo(userId, status) {
+async function listTodo(userId, timeConstraint, status, specificDate) {
   status = status === "" || status === undefined ? "ALL" : status;
 
-  validateGetListTodo(status);
+  validateGetListTodo(timeConstraint, status, specificDate);
 
   const db =  await createConnection();
 
@@ -81,25 +82,19 @@ async function listTodo(userId, status) {
     where.push(eq(todoSchema.status, status))
   }
   
+  if(timeConstraint === "TODAY") {
+    const startDay = dayjs().startOf("day");
+    const endDay = dayjs().endOf("day")
+    where.push(or(eq(todoSchema.scheduledAt, null), and(gte(todoSchema.scheduledAt, startDay), lte(todoSchema.scheduledAt, endDay))))
+  }
+  
   const todos = await db.query.todo.findMany({
     where: and(...where),
     orderBy: desc(todoSchema.updatedAt)
   });
 
-  let openTodo = [];
-  let doneTodo = [];
-
-  for(const todo of todos) {
-    if(todo.status === "NEW") {
-      openTodo.push(todo);
-    } else {
-      doneTodo = [[todo], ...doneTodo];
-    }
-  }
-
   return {
-    openTodo,
-    doneTodo
+    todos
   }
 }
 

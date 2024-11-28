@@ -37,7 +37,7 @@ routerTodo.delete('/delete/:id', async function(req, res, next) {
 
 routerTodo.get('/', async function (req, res, next) {
   try {
-    const svcResp = await todoService.listTodo(req.user.userId, req.query.status);
+    const svcResp = await todoService.listTodo(req.user.userId, req.query.timeConstraint, req.query.status, req.query.date);
     res.json(svcResp);
   } catch(error) {
     next(error)

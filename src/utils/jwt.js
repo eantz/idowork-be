@@ -14,7 +14,7 @@ function generateAccessToken(userId, username) {
 }
 
 function regenerateAccessToken(refreshToken) {
-
+  
   const decoded = jwt.verify(refreshToken, process.env.TOKEN_SECRET);
   const accessToken = jwt.sign({userId: decoded.userId, username: decoded.username}, process.env.TOKEN_SECRET, {expiresIn: '1h'});
   const newRefreshToken = jwt.sign({userId: decoded.userId, username: decoded.username}, process.env.TOKEN_SECRET, {expiresIn: '1d'});
