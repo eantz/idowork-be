@@ -8,7 +8,7 @@ const {
   validateGetListTodo
 } = require('./todo.internal')
 const { parseRFC3339Datetime } = require('../utils/datetime');
-const { eq, and, or, desc, gte, lte } = require('drizzle-orm');
+const { eq, and, or, desc, gte, lte, isNull } = require('drizzle-orm');
 const { UsecaseError } = require('../utils/error');
 const dayjs = require('dayjs');
 
@@ -17,15 +17,20 @@ async function createTodo(userId, message, scheduledAt) {
 
   const db =  await createConnection();
 
-  await db.insert(todoSchema).values({
+  let insertValues = {
     userId: userId,
     message: message,
     status: "NEW",
-    scheduledAt: parseRFC3339Datetime(scheduledAt),
     createdBy: userId,
-  });
+  }
 
-  return {}
+  if(scheduledAt !== undefined && scheduledAt !== null && scheduledAt !== "") {
+    insertValues.scheduledAt = parseRFC3339Datetime(scheduledAt)
+  }
+
+  const result = await db.insert(todoSchema).values(insertValues).$returningId();
+
+  return result[0];
 }
 
 async function updateTodo(userId, todoId, message, status, scheduledAt) {
@@ -85,7 +90,7 @@ async function listTodo(userId, timeConstraint, status, specificDate) {
   if(timeConstraint === "TODAY") {
     const startDay = dayjs().startOf("day");
     const endDay = dayjs().endOf("day")
-    where.push(or(eq(todoSchema.scheduledAt, null), and(gte(todoSchema.scheduledAt, startDay), lte(todoSchema.scheduledAt, endDay))))
+    where.push(or(isNull(todoSchema.scheduledAt), and(gte(todoSchema.scheduledAt, startDay), lte(todoSchema.scheduledAt, endDay))))
   }
   
   const todos = await db.query.todo.findMany({

@@ -12,7 +12,7 @@ function validateCreateTodo(message, scheduledAt) {
     throw new ValidationError('Message is required');
   }
 
-  if(!isEmpty(scheduledAt) && !isDateTimeRFC3339(scheduledAt)) {
+  if(scheduledAt !== undefined && scheduledAt !== null && !isEmpty(scheduledAt) && !isDateTimeRFC3339(scheduledAt)) {
     throw new ValidationError('Schedule is in wrong format');
   }
 }
